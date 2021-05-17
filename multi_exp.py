@@ -27,7 +27,7 @@ if exp_dict['GPU']:
 
 
 # read database.
-f = h5py.File('GWdatabase.h5','r')
+f = h5py.File('./data/raw/GWdatabase.h5','r')
 # create a list that contains all the failure cases.
 fail_list, non_fail_list = list_fail_case(f)
 
