@@ -30,22 +30,13 @@ import sys
 
 
 ################################################################################
-# Colab: mute this cell for colab
-# #If using GPU.
-# physical_devices = tf.config.experimental.list_physical_devices('GPU')
-# assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-# tf.config.experimental.set_memory_growth(physical_devices[0], True)
-
-
-################################################################################
 def list_fail_case(f):
   '''
-  Create a list that contains all the failure cases.
+  Create a list that contains all the failure cases (ie. bounce(s)=-1 ??).
   f: h5 file.
   return: 
-  fail_num: list.
-  fail_case: list.
   fail_list: list.
+  not_fail_list: list.
   '''
   fail_num = []
   index = 0
@@ -53,39 +44,45 @@ def list_fail_case(f):
       if(item == -1):
           fail_num.append(index)
       index += 1
+
   fail_case = []
   for index in fail_num:
       fail_case.append([f['reduced_data']['A(km)'][index],f['reduced_data']['omega_0(rad|s)'][index],f['reduced_data']['EOS'][index]])
+  
   fail_list= []
   for item in fail_case:
       tmp = str(item[2]).split("b'")[1].split("'")[0]
       tmp = "A" + str(int(item[0])) + "w" + str(item[1]) + "0_" + tmp
       fail_list.append(tmp) 
-  return fail_num, fail_case, fail_list
+
+  non_fail_list = []
+  for item in f['waveforms']:
+    if(item not in fail_list):
+        non_fail_list.append(item)
+        
+  return fail_list, non_fail_list
 
 
 ################################################################################
-def prepare_y(f, fail_list, y):
+def prepare_y(non_fail_list, y):
   '''
   Prepare labels.
-  f: h5 file.
-  fail_list: list.
+  non_fail_list: list.
   y: str. Use either 'w', 'EOS', or 'A'.
   return: array.
   '''
   labels = []
   index = 0
-  for item in f['waveforms']:
-    if(item not in fail_list):
-        if y == 'w':
-          labels.append(float(item.split('_')[0].split('w')[1]))
-        elif y == 'EOS':
-          labels.append(str(item.split('_')[1]))
-        elif y == 'A':
-          labels.append(str(item.split('_')[0].split('w')[0].split('A')[1]))
-        else:
-          sys.exit("\n Use either 'w', 'EOS', or 'A' as the input. Check prepare_y().")
-    index += 1
+  for item in non_fail_list:
+      if y == 'w':
+        labels.append(float(item.split('_')[0].split('w')[1]))
+      elif y == 'EOS':
+        labels.append(str(item.split('_')[1]))
+      elif y == 'A':
+        labels.append(str(item.split('_')[0].split('w')[0].split('A')[1]))
+      else:
+        sys.exit("\n Use either 'w', 'EOS', or 'A' as the input. Check prepare_y().")
+      index += 1
 
   # turn the type of labels into array.
   labels = np.array(labels)
@@ -94,11 +91,11 @@ def prepare_y(f, fail_list, y):
 
 
 ################################################################################
-def prepare_x_image(f, fail_list, output_folder='./ftr', time_range=[-0.01, 0.006], resolution={'figsize':(4, 4),'dpi':64}, ftype='jpeg', overwrite=False):
+def prepare_x_image(f, non_fail_list, output_folder='./ftr', time_range=[-0.01, 0.006], resolution={'figsize':(4, 4),'dpi':64}, ftype='jpeg', overwrite=False):
   '''
   Prepare features (image).
   f: h5 file.
-  fail_list: list.
+  non_fail_list: list.
   output_folder: str.
   time_range: list.
   resolution: dict. Default=256*256.
@@ -117,7 +114,7 @@ def prepare_x_image(f, fail_list, output_folder='./ftr', time_range=[-0.01, 0.00
   #draw the image which is 256*256.
   index = 0
   for item in f['waveforms']:
-      if (item not in fail_list):
+      if (item in non_fail_list):
           # save path
           fname = "%s/%s_%s.%s" % (output_folder, str(index), fname0, ftype)
           
@@ -146,11 +143,10 @@ def prepare_x_image(f, fail_list, output_folder='./ftr', time_range=[-0.01, 0.00
 
 
 ################################################################################
-def load_x_image(f, fail_list, input_folder='./ftr', time_range=[-0.01, 0.006], resolution={'figsize':(4, 4),'dpi':64}, ftype='jpeg', turn_array=True):
+def load_x_image(non_fail_list, input_folder='./ftr', time_range=[-0.01, 0.006], resolution={'figsize':(4, 4),'dpi':64}, ftype='jpeg', turn_array=True):
   '''
   Load in features (image), and turn images into array or not.
-  f: h5 file.
-  fail_list: list.
+  non_fail_list: list.
   input_folder: str.
   time_range: list.
   resolution: dict. Default=256*256.
@@ -166,12 +162,11 @@ def load_x_image(f, fail_list, input_folder='./ftr', time_range=[-0.01, 0.006], 
   # load x images
   data = []
   index = 0
-  for item in f['waveforms']:
-      if(item not in fail_list):
-          # load path
-          fname = "%s/%s_%s.%s" % (input_folder, str(index), fname0, ftype)
-          image = Image.open(fname).convert('L')
-          data.append(np.array(image))
+  for item in non_fail_list:
+      # load path
+      fname = "%s/%s_%s.%s" % (input_folder, str(index), fname0, ftype)
+      image = Image.open(fname).convert('L')
+      data.append(np.array(image))
       index += 1
 
   #transform the data type to numpy array
@@ -253,7 +248,7 @@ def evaluate_model(y_test, X_test, label_encoder=None):
 
 
 ################################################################################
-def plot_confusion_matrix(labels, y_test, y_pred):
+def plot_confusion_matrix(labels, y_test, y_pred, save_path=None):
   #plot confusion matrix
   y_pred = y_pred.astype('str')
   y_test = np.array(y_test).astype('str')
@@ -267,6 +262,9 @@ def plot_confusion_matrix(labels, y_test, y_pred):
                     columns = [i for i in tmp])
   plt.figure(figsize = (10,7))
   sn.heatmap(df_cm, annot=True)
+  
+  if save_path is not None:
+      plt.savefig(save_path)
   return
 
 
