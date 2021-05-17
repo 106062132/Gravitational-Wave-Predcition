@@ -1,7 +1,7 @@
 exp_dict = {
     'GPU': False,  # Choose False for colab
     'target': 'w', 'one-hot': True,
-    'ftr_folder': './ftr', 'time_range': [-0.01, 0.006], 'resolution': {'figsize':(4, 4),'dpi':64}, 'ftype': 'jpeg',
+    'ftr_folder': './data/ftr', 'time_range': [-0.01, 0.006], 'resolution': {'figsize':(4, 4),'dpi':64}, 'ftype': 'jpeg',
     'sample':'group1', 'test_size': None, 'random_seed': 5,
     'model_name': 'cnn1', 'max_epoch': 350, 'measure': 'acc', 'measure_val': 0.95,
     'show_plot': False
@@ -20,9 +20,6 @@ if exp_dict['GPU']:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
-# Colab: download data from web
-if not os.path.isfile('./GWdatabase.h5'):
-    !wget -O GWdatabase.h5 https://zenodo.org/record/201145/files/GWdatabase.h5?download=1
 # read database.
 f = h5py.File('GWdatabase.h5','r')
 # create a list that contains all the failure cases.
@@ -113,7 +110,7 @@ for key, value in g_dict.items():
         y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder)
         print('test accuracy =', acc)
         #plot confusion matrix
-        plt_save_path = 'cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
+        plt_save_path = './data/plot/cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
         plot_confusion_matrix(labels, y_test, y_pred, plt_save_path)
         if exp_dict['show_plot']:
             plt.show()
@@ -123,9 +120,9 @@ for key, value in g_dict.items():
 
 
     # Save model & result
-    model_fname = 'model_%s_%s_%s-%s_acc%s.h5' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
+    model_fname = './model/model_%s_%s_%s-%s_acc%s.h5' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
     model.save(model_fname)
-    hist_fname = 'hist_%s_%s_%s-%s_acc%s.txt' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
+    hist_fname = './data/result/hist_%s_%s_%s-%s_acc%s.txt' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
     with open(hist_fname, "wb") as file:
         pickle.dump(hist_dict, file=file)
 
