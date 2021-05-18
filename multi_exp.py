@@ -5,11 +5,10 @@ from param import *
 #===============================================================================
 # Configs
 exp_dict = {
-    'GPU': True,  # Choose False for colab
     'target': 'w', 'one-hot': True,
     'ftr_folder': './data/ftr', 'time_range': [-0.01, 0.006], 'resolution': {'figsize':(4, 4),'dpi':64}, 'ftype': 'jpeg',
     'sample':'group1', 'test_size': None, 'random_seed': 5,
-    'model_name': 'cnn1', 'max_epoch': 350, 'measure': 'acc', 'measure_val': 0.95,
+    'model_name': 'cnn1', 'max_epoch': 200, 'measure': 'val_acc', 'measure_val': 0.95,
     'show_plot': False
     
 }
@@ -18,13 +17,6 @@ exp_dict = {
 #===============================================================================
 print('Preparing Data...')
 start = datetime.datetime.now()
-
-# If using GPU.
-if exp_dict['GPU']:
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-
 
 # read database.
 f = h5py.File('./data/raw/GWdatabase.h5','r')
@@ -39,7 +31,6 @@ prepare_x_image(f, fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], ex
 
 stop = datetime.datetime.now()
 print('Done! Time =', stop - start)
-sys.exit()
 
 #===============================================================================
 print('Training model...')
@@ -62,8 +53,8 @@ for key, value in g_dict.items():
       sys.exit('\n For %s in %s, train label != test label.' % (exp_dict['target'], exp_dict['sample']))
 
     # Load cleaned X data
-    X_train = load_x_image(train_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'])
-    X_test = load_x_image(test_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'])
+    X_train = load_x_image(f, train_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'])
+    X_test = load_x_image(f, test_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'])
     
     # transfer the shape of image data for model training
     w = exp_dict['resolution']['figsize'][0]*exp_dict['resolution']['dpi']
@@ -86,28 +77,30 @@ for key, value in g_dict.items():
 
 
     # Train
-    epochs = 100
-    _history = model.fit(x=X_train, y=y_train, validation_data=(X_test, y_test), epochs=epochs, batch_size=32)
-    hist_dict = _history.history
-    _acc = hist_dict[exp_dict['measure']][-1]
-
-
-    while all([epochs <= exp_dict['max_epoch'], _acc < exp_dict['measure_val']]):
-        if _acc < 0.9:
-            _epochs = 50
-        elif all([_acc >= 0.9, _acc < 0.95]):
-            _epochs = 20
-        elif _acc >= 0.95:
-            _epochs = 10
-
-        _history = model.fit(x=X_train, y=y_train, validation_data=(X_test, y_test), epochs=_epochs, batch_size=32)
-        #history = model.fit(x=[X_train, X_fpeak_train], y=y_train, validation_data=([X_test, X_fpeak_test], y_test), epochs=200, batch_size=32)
-
-        for k in hist_dict.keys():
-            hist_dict[k] = hist_dict[k] + _history.history[k]
-
-        epochs += _epochs
+    # If using GPU.
+    with tf.device("/gpu:0"):
+        epochs = 100
+        _history = model.fit(x=X_train, y=y_train, validation_data=(X_test, y_test), epochs=epochs, batch_size=32)
+        hist_dict = _history.history
         _acc = hist_dict[exp_dict['measure']][-1]
+
+
+        while all([epochs <= exp_dict['max_epoch'], _acc < exp_dict['measure_val']]):
+            if _acc < 0.9:
+                _epochs = 50
+            elif all([_acc >= 0.9, _acc < 0.95]):
+                _epochs = 20
+            elif _acc >= 0.95:
+                _epochs = 10
+
+            _history = model.fit(x=X_train, y=y_train, validation_data=(X_test, y_test), epochs=_epochs, batch_size=32)
+            #history = model.fit(x=[X_train, X_fpeak_train], y=y_train, validation_data=([X_test, X_fpeak_test], y_test), epochs=200, batch_size=32)
+
+            for k in hist_dict.keys():
+                hist_dict[k] = hist_dict[k] + _history.history[k]
+
+            epochs += _epochs
+            _acc = hist_dict[exp_dict['measure']][-1]
 
 
     # Evaluate
@@ -117,11 +110,11 @@ for key, value in g_dict.items():
         print('test accuracy =', acc)
         #plot confusion matrix
         plt_save_path = './data/plot/cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
-        plot_confusion_matrix(labels, y_test, y_pred, plt_save_path)
+        plot_confusion_matrix(y_test, y_test, y_pred, plt_save_path)
         if exp_dict['show_plot']:
             plt.show()
     else:
-        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder)
+        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
         print('test accuracy =', acc)
 
 
