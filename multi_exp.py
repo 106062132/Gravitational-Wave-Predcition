@@ -113,7 +113,7 @@ for key, value in g_dict.items():
     # Evaluate
     print('%s_%s_%s-%s' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key)))
     if exp_dict['one-hot']:
-        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder)
+        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
         print('test accuracy =', acc)
         #plot confusion matrix
         plt_save_path = './data/plot/cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
