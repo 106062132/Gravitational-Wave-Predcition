@@ -5,7 +5,7 @@ from param import *
 #===============================================================================
 # Configs
 exp_dict = {
-    'target': 'w', 'one-hot': True,
+    'target': 'A', 'one-hot': True,
     'ftr_folder': './data/ftr', 'time_range': [-0.01, 0.006], 'resolution': {'figsize':(4, 4),'dpi':64}, 'ftype': 'jpeg',
     'sample':'group1', 'test_size': None, 'random_seed': 5,
     'model_name': 'cnn1', 'max_epoch': 200, 'measure': 'val_acc', 'measure_val': 0.95,
