@@ -25,7 +25,7 @@ fail_list, non_fail_list = list_fail_case(f)
 
 
 # Create image x
-prepare_x_image(f, fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
+prepare_x_image(f, non_fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
 # Todo: Data augmentation
 
 
