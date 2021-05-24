@@ -103,22 +103,9 @@ for key, value in g_dict.items():
             _acc = hist_dict[exp_dict['measure']][-1]
 
 
-    # Evaluate
-    print('%s_%s_%s-%s' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key)))
-    if exp_dict['one-hot']:
-        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
-        print('test accuracy =', acc)
-        #plot confusion matrix
-        plt_save_path = './data/plot/cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
-        plot_confusion_matrix(y_test, y_test, y_pred, plt_save_path)
-        if exp_dict['show_plot']:
-            plt.show()
-    else:
-        y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
-        print('test accuracy =', acc)
-
 
     # Save model & result
+    acc = hist_dict['val_acc'][-1]
     model_fname = './model/model_%s_%s_%s-%s_acc%s.h5' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
     model.save(model_fname)
     hist_fname = './data/result/hist_%s_%s_%s-%s_acc%s.txt' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
@@ -134,3 +121,25 @@ for key, value in g_dict.items():
 
     stop = datetime.datetime.now()
     print('Done! Time =', stop - start)
+
+# ===============================================================================
+print('Evaluate model...')
+start = datetime.datetime.now()
+
+# csu todo: wrap Evaluate up
+# # Evaluate
+# print('%s_%s_%s-%s' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key)))
+# if exp_dict['one-hot']:
+#     y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
+#     print('test accuracy =', acc)
+#     #plot confusion matrix
+#     plt_save_path = './data/plot/cm_%s_%s_%s-%s_acc%s.jpg' % (exp_dict['model_name'], exp_dict['target'], exp_dict['sample'], str(key), str(round(acc, 2)))
+#     plot_confusion_matrix(y_test, y_test, y_pred, plt_save_path)
+#     if exp_dict['show_plot']:
+#         plt.show()
+# else:
+#     y_test, y_pred, acc = evaluate_model(y_test, X_test, label_encoder=label_encoder1)
+#     print('test accuracy =', acc)
+
+stop = datetime.datetime.now()
+print('Done! Time =', stop - start)
