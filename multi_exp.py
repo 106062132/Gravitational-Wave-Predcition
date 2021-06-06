@@ -25,7 +25,7 @@ fail_list, non_fail_list = list_fail_case(f)
 
 
 # Create image x
-prepare_x_image(f, non_fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
+create_x_image(f, non_fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
 # Todo: Data augmentation
 
 
@@ -45,8 +45,8 @@ for key, value in g_dict.items():
     
     # Todo: load data w/ augmentation
     # Create y
-    y_train = prepare_y(train_list, exp_dict['target'])
-    y_test = prepare_y(test_list, exp_dict['target'])
+    y_train = create_y(train_list, exp_dict['target'])
+    y_test = create_y(test_list, exp_dict['target'])
     num_of_label0 = len(np.unique(y_train))
     num_of_label1 = len(np.unique(y_test))
     if set(np.unique(y_train)) != set(np.unique(y_test)):

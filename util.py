@@ -65,9 +65,9 @@ def list_fail_case(f):
 
 
 ################################################################################
-def prepare_y(non_fail_list, y):
+def create_y(non_fail_list, y):
     '''
-    Prepare labels.
+    Create labels.
     non_fail_list: list.
     y: str. Use either 'w', 'EOS', or 'A'.
     return: array.
@@ -82,7 +82,7 @@ def prepare_y(non_fail_list, y):
         elif y == 'A':
             labels.append(str(item.split('_')[0].split('w')[0].split('A')[1]))
         else:
-            sys.exit("\n Use either 'w', 'EOS', or 'A' as the input. Check prepare_y().")
+            sys.exit("\n Use either 'w', 'EOS', or 'A' as the input. Check create_y().")
         index += 1
 
     # turn the type of labels into array.
@@ -92,10 +92,10 @@ def prepare_y(non_fail_list, y):
 
 
 ################################################################################
-def prepare_x_image(f, non_fail_list, output_folder='./ftr', time_range=[-0.01, 0.006],
+def create_x_image(f, non_fail_list, output_folder='./data/ftr', time_range=[-0.01, 0.006],
                     resolution={'figsize': (4, 4), 'dpi': 64}, ftype='jpeg', overwrite=False):
     '''
-    Prepare features (image).
+    Create features (image).
     f: h5 file.
     non_fail_list: list.
     output_folder: str.
@@ -145,7 +145,48 @@ def prepare_x_image(f, non_fail_list, output_folder='./ftr', time_range=[-0.01, 
 
 
 ################################################################################
-def load_x_image(f, non_fail_list, input_folder='./ftr', time_range=[-0.01, 0.006],
+def create_x_strain(f, non_fail_list, output_folder='./data/ftr', time_range=[-0.01, 0.006], overwrite=False):
+    '''
+    Create features (time and strain distance).
+    f: h5 file.
+    non_fail_list: list.
+    output_folder: str.
+    time_range: list.
+    overwrite: boolean. whether to overwrite the exist files.
+    return
+    '''
+    # create output folder
+    if not os.path.isdir(output_folder):
+        os.mkdir(output_folder)
+    # create output file name
+    fname0 = "strain_%sto%s" % (str(time_range[0]), str(time_range[1]))
+
+    # create the time & strain DF
+    index = 0
+    for item in f['waveforms']:
+        if (item in non_fail_list):
+            # save path
+            fname = "%s/%s_%s.csv" % (output_folder, str(index), fname0)
+
+            # if the file is already exist and needs no overwrite, then don't recreate the ftr again
+            if all([os.path.exists(fname), not overwrite]):
+                index += 1
+                continue
+
+            # create DF
+            x = f['waveforms'][item]['t-tb(s)']
+            y = f['waveforms'][item]['strain*dist(cm)']
+            df = pd.DataFrame({'t': np.array(x), 'strain': np.array(y)})
+
+            df.to_csv(fname)
+
+        index += 1
+
+    return
+
+
+################################################################################
+def load_x_image(f, non_fail_list, input_folder='./data/ftr', time_range=[-0.01, 0.006],
                  resolution={'figsize': (4, 4), 'dpi': 64}, ftype='jpeg', turn_array=True):
     '''
     Load in features (image), and turn images into array or not.

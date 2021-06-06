@@ -1,3 +1,5 @@
+from util import *
+
 exp_dict = {
     'target': 'EOS', 'one-hot': True,
     'ftr_folder': './ftr', 'time_range': [-0.01, 0.006], 'resolution': {'figsize':(4, 4),'dpi':64}, 'ftype': 'jpeg',
@@ -12,8 +14,8 @@ print('Preparing Data...')
 start = datetime.datetime.now()
 
 # Colab: download data from web
-if not os.path.isfile('./GWdatabase.h5'):
-    !wget -O GWdatabase.h5 https://zenodo.org/record/201145/files/GWdatabase.h5?download=1
+# if not os.path.isfile('./GWdatabase.h5'):
+#     !wget -O GWdatabase.h5 https://zenodo.org/record/201145/files/GWdatabase.h5?download=1
 # read database.
 f = h5py.File('GWdatabase.h5','r')
 # create a list that contains all the failure cases.
@@ -21,10 +23,10 @@ fail_num, fail_case, fail_list = list_fail_case(f)
 
 
 # Create y
-labels = prepare_y(f, fail_list, exp_dict['target'])
+labels = create_y(f, fail_list, exp_dict['target'])
 num_of_label = len(np.unique(labels))
 # Create image x
-prepare_x_image(f, fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
+create_x_image(f, fail_list, exp_dict['ftr_folder'], exp_dict['time_range'], exp_dict['resolution'], exp_dict['ftype'], overwrite=False)
 # Todo: Data augmentation
 
 
